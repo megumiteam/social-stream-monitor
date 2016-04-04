@@ -6,13 +6,13 @@ Twitterの特定ワードによる検索の結果をリアルタイムに可視�
 
 
 
-# Setup
-## Twitter Stream to Kinesis
-### Step1 Install Python modules boto3 and TwitterAPI.
+## Setup
+### Twitter Stream to Kinesis
+- Step1 Install Python modules boto3 and TwitterAPI.
 
     $ pip install boto3 TwitterAPI
     
-### Step2 Edit twitter2kinesis.py
+- step2 Edit twitter2kinesis.py
 
 Edit The Twitter API parameters
 
