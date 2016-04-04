@@ -10,7 +10,7 @@ Twitterの特定ワードによる検索の結果をリアルタイムに可視�
 ### Twitter Stream to Kinesis
 - Step1 Install Python modules boto3 and TwitterAPI.
 
-    $ pip install boto3 TwitterAPI
+    `$ pip install boto3 TwitterAPI`
     
 - step2 Edit twitter2kinesis.py
 
