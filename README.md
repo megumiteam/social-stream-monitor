@@ -1,18 +1,19 @@
 # Social Stream Monitor
-## Description
 Twitterの特定ワードによる検索の結果をリアルタイムに可視化するツールです
+
+[![social-stream-monitor](https://i.ytimg.com/vi/G8KbrmuIE4o/hqdefault.jpg)](https://www.youtube.com/watch?v=G8KbrmuIE4o)
 
 ## Architecture
 
 
 
-# Setup
-## Twitter Stream to Kinesis
-### Step1 Install Python modules boto3 and TwitterAPI.
+## Setup
+### Twitter Stream to Kinesis
+###### Step1 Install Python modules boto3 and TwitterAPI.
 
     $ pip install boto3 TwitterAPI
-    
-### Step2 Edit twitter2kinesis.py
+
+###### step2 Edit twitter2kinesis.py
 
 Edit The Twitter API parameters
 
@@ -28,21 +29,21 @@ AWS parameters - from the Outputs tab of the CloudFormation template
     region = ""
     stream_name = ""
     
-### Execute
+###### Execute
 
     $ python twitter2kinesis.py
     
 ## Socket.io server
-### Step1 Install node module
+###### Step1 Install node module
 
    $ npm install aws-sdk
    $ npm install url
    $ npm install async
    $ npm install socket.io
    
-### Step2 Edit app.js
+###### Step2 Edit app.js
 
-Amazon SNS parameters
+Amazon SNS parameters - from the Outputs tab of the CloudFormation template
 
     var args = {
         TopicArn:"arn:aws:sns:...",
@@ -51,9 +52,9 @@ Amazon SNS parameters
     };
 
 
-### Step3 Edit config/aws.json
+###### Step3 Edit config/aws.json
 
-AWS parameters
+AWS parameters - from the Outputs tab of the CloudFormation template
 
     {
         "accessKeyId":"",
@@ -61,3 +62,9 @@ AWS parameters
         "region":""
     }
 
+###### Execute
+    $ node app.js
+
+## Setup Cloudformation template
+- Upload `social_stream_processing.template` to Cloudformation(Please choose region `us-east-1`)
+- Input `http:/<socket.io endpoint>:3000/` in socket.io server endpoint
