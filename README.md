@@ -64,3 +64,5 @@ AWS parameters - from the Outputs tab of the CloudFormation template
     $ node app.js
 
 ## Setup Cloudformation template
+- Upload `social_stream_processing.template` to Cloudformation(Please choose region `us-east-1`)
+- Input `http:/<socket.io endpoint>:3000/` in socket.io server endpoint
