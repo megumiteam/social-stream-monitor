@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Social Stream Monitor</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="dist/css/bootstrap.min.css">
+
+    <!-- Timeline CSS -->
+    <link href="dist/css/timeline.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="dist/css/sb-admin-2.css" rel="stylesheet">
+ 
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="http://d3js.org/topojson.v1.min.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/epoch/0.8.4/js/epoch.min.js"></script>
+    <script type="text/javascript" src="http://iop.io/js/vendor/polymer/PointerEvents/pointerevents.js"></script>
+    <script type="text/javascript" src="http://iop.io/js/vendor/polymer/PointerGestures/pointergestures.js"></script>
+    <script type="text/javascript" src="http://iop.io/js/iopctrl.js"></script>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/epoch/0.8.4/css/epoch.min.css">
+<style>
+.unselectable {
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+/* css formats for the gauge */
+.gauge .domain {
+    stroke-width: 2px;
+    stroke: #515151;
+}
+.gauge .tick line {
+    stroke: #515151;
+    stroke-width: 2px;
+}
+
+.gauge line {
+    stroke: #515151;
+}
+.gauge .arc, .gauge .cursor {
+    opacity: 0;
+}
+.gauge .major {
+    fill: #515151;
+    font-size: 20px;
+    font-family: 'Play', verdana, sans-serif;
+    font-weight: normal;
+}
+
+.gauge .indicator {
+    stroke: #EE3311;
+    fill: #000;
+    stroke-width: 4px;
+}
+/* css formats for the segment display */
+.segdisplay .on {
+    fill: #999999;
+}
+.segdisplay .off {
+    fill: #999999;
+    opacity: 0.15;
+}
+
+#map {
+  height: 600px;
+}
+
+.sphere { /* sea */
+  fill: #CECECF;
+}
+
+.land { /* land */
+  fill: #444;
+}
+
+.boundary { /* boundary */
+  fill: none;
+  stroke: #fff;
+  stroke-linejoin: round;
+  strole-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+    </style>
+<script type="text/javascript">
+    
+  var RealTimeData = function(layers) {
+      this.layers = layers;
+      this.timestamp = ((new Date()).getTime() / 1000)|0;
+      this.result = [];
+      human = 0;
+  };
+
+  RealTimeData.prototype.history = function(entries) {
+    if (typeof(entries) != 'number' || !entries) {
+      entries = 1;
+    }
+
+    var history = [];
+    for (var k = 0; k < this.layers; k++) {
+      history.push({ values: [] });
+    }
+
+    for (var i = 0; i < entries; i++) {
+      for (var j = 0; j < this.layers; j++) {
+        history[j].values.push({time: this.timestamp, y: 0});
+      }
+      this.timestamp++;
+    }
+
+    return history;
+  };
+
+  RealTimeData.prototype.next = function(y) {
+      var entry = [];
+      for (var i = 0; i < this.layers; i++) {
+          entry.push({ time: this.timestamp, y: y });
+          this.result = [];
+      }
+      this.timestamp++;
+      return entry;
+  }
+
+  window.RealTimeData = RealTimeData;
+
+$(function(){
+  var socket = io.connect();
+  var data_v = new RealTimeData(1);
+  var tw_cnt = 0;
+
+  var chart = $('#lineChart')
+   .epoch({
+        type: 'time.line',
+        data: data_v.history(),
+        fps :  60,
+        axes: ['left', 'bottom']
+    });
+  var svg_2 = d3.select("#speedometer")
+          .append("svg:svg")
+          .attr("width", 400)
+          .attr("height", 400);
+  var gauge = iopctrl.arcslider()
+          .radius(120)
+          .events(false)
+          .indicator(iopctrl.defaultGaugeIndicator);
+  gauge.axis().orient("in")
+          .normalize(true)
+          .ticks(12)
+          .tickSubdivide(3)
+          .tickSize(10, 8, 10)
+          .tickPadding(5)
+          .scale(d3.scale.linear()
+                  .domain([0, 20])
+                  .range([-3*Math.PI/4, 3*Math.PI/4]));
+  var segDisplay = iopctrl.segdisplay()
+          .width(80)
+          .digitCount(6)
+          .negative(false)
+          .decimals(0);
+   svg_2.append("g")
+          .attr("class", "segdisplay")
+          .attr("transform", "translate(130, 200)")
+          .call(segDisplay);
+  svg_2.append("g")
+          .attr("class", "gauge")
+          .call(gauge);
+  segDisplay.value(0);
+  gauge.value(0);
+                                
+  socket.on('msg', function(data) {
+    tw_cnt++;
+    topic_cnt_tmp++;
+    data_v.result.push(data);
+    var user_name = JSON.parse(data).username;
+    var text = JSON.parse(data).text;
+    var profile_image_url = JSON.parse(data).profile_image_url;
+    var coordinates = JSON.parse(data).coordinates;
+    var ts = data_v.timestamp;
+    var d = new Date( ts*1000 );
+    var hour = ( d.getHours()   < 10 ) ? '0' + d.getHours()   : d.getHours();
+    var min  = ( d.getMinutes() < 10 ) ? '0' + d.getMinutes() : d.getMinutes();
+    var sec   = ( d.getSeconds() < 10 ) ? '0' + d.getSeconds() : d.getSeconds();
+    $("#timeline").prepend('<li class="left clearfix"><span class="chat-img pull-left"><img src="'+profile_image_url+'" alt="User Avatar" class="img-circle" /></span><div class="chat-body clearfix"><div class="header"><strong class="primary-font">'+user_name+'</strong><small class="pull-right text-muted"><i class="fa fa-clock-o fa-fw"></i>'+hour+':'+min+':'+sec+'</small></div><p>'+text+'</p></div></li>');
+    
+    
+    if ( tw_cnt > 20 ) {
+      $('ul#timeline > li:last-child').remove();
+    }
+
+    if ( coordinates !== null ) { 
+      var collection = {"objects":[
+                        {"circle":{"coordinates":coordinates.coordinates.reverse()}}
+                        ]}
+      var svg = d3.select("#map").select("svg"),g = svg.append("g");
+      
+      collection.objects.forEach(function(d) {
+        d.LatLng = new L.LatLng(d.circle.coordinates[0],
+          d.circle.coordinates[1])
+      })
+        
+      var feature = g.selectAll("circle")
+         .data(collection.objects)
+         .enter().append("circle")
+         .style("stroke", "black")  
+         .style("opacity", .8) 
+         .style("fill", "red")
+         .attr("r", 7);  
+        
+      map.on("viewreset", update);
+      update();
+       
+      function update() {
+        feature.attr("transform", 
+          function(d) { 
+              return "translate("+ 
+            map.latLngToLayerPoint(d.LatLng).x +","+ 
+            map.latLngToLayerPoint(d.LatLng).y +")";
+          }
+        )
+      }
+    }
+  });
+
+  setInterval( function() {  	
+    $('#min-per-cnt').text(data_v.result.length + '人');
+    segDisplay.value(data_v.result.length);
+    gauge.value(data_v.result.length);
+  	chart.push(data_v.next(data_v.result.length));
+  }, 1000);
+  
+  var topic_cnt_tmp = 0;
+  var topic_cnt = [];
+  var topic_roop = 0;
+  setInterval( function() {
+    topic_roop++;
+    
+    if ( topic_roop > 6 ) {
+      topic_cnt.shift();
+      topic_cnt.push(topic_cnt_tmp);
+      $("#topic-man").text(sum(topic_cnt)+ "人");
+    } else {
+      topic_cnt.push(topic_cnt_tmp);
+    }
+
+    topic_cnt_tmp = 0;    
+  }, 5000);
+  
+  var sum  = function(arr) {
+    var sum = 0;
+    arr.forEach(function(elm) {
+        sum += elm;
+    });
+    return sum;
+  };
+});
+  </script>
+  
+
+</head>
+
+<body>
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Social Stream Monitor</a>
+            </div>
+            <!-- /.navbar-header -->
+
+            <div class="navbar-default sidebar" role="navigation">
+                <div class="sidebar-nav navbar-collapse">
+                    <ul class="nav" id="side-menu">
+                        <li>
+                            <a href="index.html"><i class="fa fa-dashboard fa-fw"></i> Tweet Realtime Monitor</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+                <!-- /.sidebar-collapse -->
+            </div>
+            <!-- /.navbar-static-side -->
+        </nav>
+
+        <div id="page-wrapper">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="page-header">Tweet Realtime Monitor</h1>
+                </div>
+                <!-- /.col-lg-12 -->
+            </div>
+            <!-- /.row -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <i class="fa fa-bar-chart-o fa-fw"></i> Time Chart
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <div id="lineChart" class="epoch" style="width: 100%; height: 200px;"></div>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <!-- /.panel -->
+                    <div class="chat-panel panel panel-default">
+                        <div class="panel-heading">
+                            Tweet timeline
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <ul id="timeline" class="chat">
+                                
+                            </ul>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                    <!-- /.panel .chat-panel -->
+                </div>
+                <!-- /.col-lg-8 -->
+                <div class="col-lg-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            現在話題にしている人の数
+                        </div>
+                        <div class="panel-body">
+                            <p id="topic-man" class="huge"><img src="http://cdnjs.cloudflare.com/ajax/libs/semantic-ui/0.16.1/images/loader-large.gif"/></p>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                    <!-- /.panel -->
+                    
+                </div>
+                <!-- /.col-lg-4 -->
+                <div class="col-lg-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            秒間のTweet数 : <span id="min-per-cnt" ></span>
+                        </div>
+                        <div class="panel-body">
+                            <div>
+                                <span id="speedometer"></span>
+                                
+                            </div>
+                            
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                    <!-- /.panel -->
+                    
+                </div>
+                <!-- /.col-lg-4 -->
+                <div class="col-lg-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <i class="fa fa-bar-chart-o fa-fw"></i> Map
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div id="map" class="panel-body">
+                        <script  type="text/javascript">
+                         var map = L.map('map').setView([35.689488, 139.691706], 2);
+                         mapLink = '<a href="http://openstreetmap.org">OpenStreetMap</a>';
+
+                         L.tileLayer(
+                             'http://{s}.www.toolserver.org/tiles/bw-mapnik/{z}/{x}/{y}.png', {
+                             attribution: '&copy; ' + mapLink + ' Contributors',
+                             maxZoom: 18,
+                         }).addTo(map);
+                         
+                         map._initPathRoot();
+                         
+                        </script>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /#page-wrapper -->
+    </div>
+    <!-- /#wrapper -->
+</body>
+
+</html>
