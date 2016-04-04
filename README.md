@@ -1,6 +1,8 @@
 # Social Stream Monitor
 Twitterの特定ワードによる検索の結果をリアルタイムに可視化するツールです
 
+[![social-stream-monitor](https://i.ytimg.com/vi/G8KbrmuIE4o/hqdefault.jpg)](https://www.youtube.com/watch?v=G8KbrmuIE4o)
+
 ## Architecture
 
 
