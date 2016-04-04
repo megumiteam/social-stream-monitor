@@ -1,5 +1,5 @@
 # Social Stream Monitor
-Twitterの特定ワードによる検索の結果をリアルタイムに可視化するツールです
+It is a tool to visualize in real time the results of a search by a specific word of Twitter.
 
 [![social-stream-monitor](https://i.ytimg.com/vi/G8KbrmuIE4o/hqdefault.jpg)](https://www.youtube.com/watch?v=G8KbrmuIE4o)
 
