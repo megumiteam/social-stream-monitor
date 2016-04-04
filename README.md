@@ -29,10 +29,6 @@ AWS parameters - from the Outputs tab of the CloudFormation template
     region = ""
     stream_name = ""
     
-###### Execute
-
-    $ python twitter2kinesis.py
-    
 ## Socket.io server
 ###### Step1 Install node module
 
@@ -62,9 +58,11 @@ AWS parameters - from the Outputs tab of the CloudFormation template
         "region":""
     }
 
-###### Execute
-    $ node app.js
-
 ## Setup Cloudformation template
 - Upload `social_stream_processing.template` to Cloudformation(Please choose region `us-east-1`)
 - Input `http:/<socket.io endpoint>:3000/` in socket.io server endpoint
+
+## Execute
+- `$ node app.js` execute socket.io server
+- `$ python twitter2kinesis.py` execute Twitter Streaming to Kinesis
+- Access to `http:/<socket.io endpoint>:3000/` on your browser.
