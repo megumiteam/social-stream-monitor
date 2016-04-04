@@ -4,7 +4,7 @@ Twitterの特定ワードによる検索の結果をリアルタイムに可視�
 [![social-stream-monitor](https://i.ytimg.com/vi/G8KbrmuIE4o/hqdefault.jpg)](https://www.youtube.com/watch?v=G8KbrmuIE4o)
 
 ## Architecture
-
+<img src="https://raw.githubusercontent.com/megumiteam/social-stream-monitor/master/socialstreammonitor.png" title="socialstreammonitor"/>
 
 
 ## Setup
