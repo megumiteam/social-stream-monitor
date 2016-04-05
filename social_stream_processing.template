@@ -4,189 +4,451 @@
     "Description" : "Template to set up Kinesis stream, Lambda functions, SNS Topic",
 
     "Parameters" : {
-        "SocketioServerEndpoint" : {
-            "Type" : "String",
-            "Description" : "Name of socket.io server endpoint."
-        }
+      "InstanceType": {
+        "Description": "EC2 instance type",
+        "Type": "String",
+        "Default": "c3.large",
+        "AllowedValues": [
+          "c3.large",
+          "c3.xlarge",
+          "c3.2xlarge",
+          "c3.4xlarge",
+          "c3.8xlarge"
+        ]
+      },
+      "KeyName" : {
+        "Type" : "String",
+        "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the web server"
+      },
+      "SocketioServerEndpoint" : {
+        "Type" : "String",
+        "Description" : "Name of socket.io server endpoint."
+      }
     },
-
+    "Mappings":{
+      "RegionTable":{
+        "us-east-1": {
+          "AMI": "ami-bbe6ded1",
+          "Location": "Virginia"
+        },
+        "us-west-2": {
+          "AMI": "ami-d8628eb8",
+          "Location": "Oregon"
+        },
+        "us-west-1": {
+          "AMI": "ami-75205315",
+          "Location": "N.California"
+        },
+        "eu-west-1": {
+          "AMI": "ami-f7ce7784",
+          "Location": "EU_Ireland"
+        },
+        "ap-southeast-1": {
+          "AMI": "ami-40fc3423",
+          "Location": "Singapore"
+        },
+        "ap-southeast-2": {
+          "AMI": "ami-5a220339",
+          "Location": "Sydney"
+        },
+        "ap-northeast-1": {
+          "AMI": "ami-a88f83c6",
+          "Location": "Tokyo"
+        },
+        "sa-east-1": {
+          "AMI": "ami-892eace5",
+          "Location": "Sao_Paul"
+        }
+      },
+      "AZs": {
+        "us-east-1": {
+          "PRI": "us-east-1d",
+          "SEC": "us-east-1c"
+        },
+        "us-west-2": {
+          "PRI": "us-west-2b",
+          "SEC": "us-west-2c"
+        },
+        "us-west-1": {
+          "PRI": "us-west-1c",
+          "SEC": "us-west-1b"
+        },
+        "eu-west-1": {
+          "PRI": "eu-west-1c",
+          "SEC": "eu-west-1b"
+        },
+        "ap-southeast-1": {
+          "PRI": "ap-southeast-1b",
+          "SEC": "ap-southeast-1a"
+        },
+        "ap-northeast-1": {
+          "PRI": "ap-northeast-1c",
+          "SEC": "ap-northeast-1a"
+        },
+        "ap-southeast-2": {
+          "PRI": "ap-southeast-2b",
+          "SEC": "ap-southeast-2a"
+        },
+        "sa-east-1": {
+          "PRI": "sa-east-1b",
+          "SEC": "sa-east-1a"
+        }
+      }
+    },
     "Resources" : {
-        "streamprocessingclient" : {
-            "Type" : "AWS::IAM::User"
-        },
-
-        "ClientPolicy" : {
-            "Type" : "AWS::IAM::Policy",
-            "Properties" : {
-                "PolicyName" : "StreamProcessingClientPolicy",
-                "PolicyDocument" : {
-                    "Statement" : [{
-                        "Effect" : "Allow",
-                        "Action" : [
-                            "kinesis:Put*"
-                        ],
-                        "Resource" : { "Fn::Join" : [ "", ["arn:aws:kinesis:", {"Ref" : "AWS::Region"} , ":", {"Ref" : "AWS::AccountId"}, ":stream/", {"Ref" : "EventStream"}]]}
-                    },
-                    {
-                        "Effect" : "Allow",
-                        "Action" : [
-                            "sns:Subscribe"
-                        ],
-                        "Resource" : "arn:aws:sns:*:*:*"
-                    }
-                    ]
-                },
-                "Users" : [{ "Ref" : "streamprocessingclient" }]
+      "VPC": {
+        "Type": "AWS::EC2::VPC",
+        "Properties": {
+          "CidrBlock": "134.0.0.0/16",
+          "InstanceTenancy": "default",
+          "EnableDnsSupport": "true",
+          "EnableDnsHostnames": "true",
+          "Tags": [
+            {
+              "Key": "Name",
+              "Value": "socketserverVPC"
+            },
+            {
+              "Key": "Application",
+              "Value": {
+                "Ref": "AWS::StackName"
+              }
             }
-        },
-
-        "ClientKeys" : {
-            "Type" : "AWS::IAM::AccessKey",
-            "Properties" : {
-                "UserName" : { "Ref" : "streamprocessingclient" }
+          ]
+        }
+      },
+      "PublicSubnet": {
+        "Type": "AWS::EC2::Subnet",
+        "Properties": {
+          "CidrBlock": "134.0.0.0/24",
+          "AvailabilityZone": {
+            "Fn::FindInMap": [
+              "AZs",
+              {
+                "Ref": "AWS::Region"
+              },
+              "PRI"
+            ]
+          },
+          "MapPublicIpOnLaunch": "true",
+          "VpcId": {
+            "Ref": "VPC"
+          },
+          "Tags": [
+            {
+              "Key": "Name",
+              "Value": {
+                "Ref": "AWS::StackName"
+              }
             }
-        },
-
-        "EventStream" : {
-            "Type" : "AWS::Kinesis::Stream",
-            "Properties" : {
-                "ShardCount" : 1
+          ]
+        }
+      },
+      "RouteTable": {
+        "Type": "AWS::EC2::RouteTable",
+        "Properties": {
+          "VpcId": {
+            "Ref": "VPC"
+          },
+          "Tags": [
+            {
+              "Key": "Name",
+              "Value": {
+                "Ref": "AWS::StackName"
+              }
             }
-        },
-        
-        "EventDataSNS" : {
-          "Type" : "AWS::SNS::Topic",
-          "Properties":{
-            "Subscription":[
-              {"Endpoint":{ "Ref" : "SocketioServerEndpoint" },"Protocol":"http"}
-            ],
-            "TopicName" : "SocketServerTopic"
+          ]
+        }
+      },
+      "AssociationRtToPubSub": {
+        "Type": "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties": {
+          "RouteTableId": {
+            "Ref": "RouteTable"
+          },
+          "SubnetId": {
+            "Ref": "PublicSubnet"
           }
-        },
-
-        "SNSEventProcessor" : {
-            "Type" : "AWS::Lambda::Function",
-            "Properties" : {
-                "Description" : "Stream Processing SNS Event Processor",
-                "Handler" : "index.handler",
-                "MemorySize" : 128,
-                "Role" : {"Fn::GetAtt" : ["EventProcessorExecutionRole", "Arn"] },
-                "Timeout" : 10,
-                "Runtime" : "nodejs",
-                "Code" : {
-                  "ZipFile":  { "Fn::Join": ["", [
-                    "var aws = require('aws-sdk');",
-                    "var sns = new aws.SNS();",
-                    "exports.handler = function(event, context) {",
-                    "    console.log('Received event:', JSON.stringify(event, null, 2));",
-                    "    var stackName = context.functionName.split('-')[0];",
-                    "    var putItems = [];",
-                    "    event.Records.forEach(function(record) {",
-                    "        payload = new Buffer(record.kinesis.data, 'base64').toString('ascii');",
-                    "        console.log('Decoded payload:', payload);",
-                    "        var tweet = JSON.parse(payload);",
-                    "        console.log('User:', tweet.user.name);",
-                    "        console.log('Timestamp:', tweet.created_at);",
-                    "        req = {",
-                    "            username:tweet.user.name,",
-                    "            profile_image_url:tweet.user.profile_image_url,",
-                    "            timestamp_ms:tweet.timestamp_ms,",
-                    "            text:tweet.text,",
-                    "            coordinates:tweet.coordinates",
-                    "        };",
-                    "        sns.publish({",
-                    "            Message: JSON.stringify(req),",
-                    "            Subject: 'message title',",
-                    "            TopicArn: '",{"Ref": "EventDataSNS"},"'",
-                    "            }, function(err, data) {",
-                    "                if (err) {",
-                    "                    console.log(err.stack);",
-                    "                    context.done(err, 'Brians Function Finished with Errors!');",
-                    "                    return;",
-                    "                }",
-                    "                console.log(data);",
-                    "                context.done(null, 'push sent');",
-                    "            });",
-                    "    });",
-                    "};"
-                  ]]}
-                }
-            }
-        },
-
-        "EventProcessorExecutionRole" : {
-            "Type" : "AWS::IAM::Role",
-            "Properties" : {
-                "AssumeRolePolicyDocument" : {
-                    "Version" : "2012-10-17",
-                    "Statement" : [ {
-                        "Effect" : "Allow",
-                        "Principal" : {
-                            "Service" : [ "lambda.amazonaws.com" ]
-                        },
-                        "Action" : [ "sts:AssumeRole" ]
-                    } ]
-                },
-                "Path" : "/",
-                "Policies" : [ {
-                    "PolicyName" : "EventProcessorExecutionPolicy",
-                    "PolicyDocument" : {
-                        "Version" : "2012-10-17",
-                        "Statement" : [
-                            {
-                                "Effect" : "Allow",
-                                "Action" : [
-                                    "logs:*"
-                                ],
-                                "Resource" : "arn:aws:logs:*:*:*"
-                            },
-                            {
-                                "Effect" : "Allow",
-                                "Action" : [
-                                    "sns:Publish"
-                                ],
-                                "Resource" : "arn:aws:sns:*:*:*"
-                            }
-                        ]
-                    }
-                } ],
-                "ManagedPolicyArns" : ["arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole"]
-            }
-        },
-
-        "MapLambdaEventSource": {
-            "Type": "AWS::Lambda::EventSourceMapping",
-            "Properties": {
-                "FunctionName": {"Ref": "SNSEventProcessor"},
-                "StartingPosition": "TRIM_HORIZON",
-                "BatchSize": 25,
-                "EventSourceArn": {
-                    "Fn::Join" : [ "", ["arn:aws:kinesis:", {"Ref" : "AWS::Region"} , ":", {"Ref" : "AWS::AccountId"}, ":stream/", {"Ref" : "EventStream"}]]
-                }
-            }
         }
+      },
+      "InternetGateway": {
+        "Type": "AWS::EC2::InternetGateway",
+        "Properties": {
+          "Tags": [
+            {
+              "Key": "Name",
+              "Value": {
+                "Ref": "AWS::StackName"
+              }
+            }
+          ]
+        }
+      },
+      "AttachGatewayToVPC": {
+        "Type": "AWS::EC2::VPCGatewayAttachment",
+        "Properties": {
+          "InternetGatewayId": {
+            "Ref": "InternetGateway"
+          },
+          "VpcId": {
+            "Ref": "VPC"
+          }
+        }
+      },
+      "Route": {
+        "Type": "AWS::EC2::Route",
+        "Properties": {
+          "DestinationCidrBlock": "0.0.0.0/0",
+          "GatewayId": {
+            "Ref": "InternetGateway"
+          },
+          "RouteTableId": {
+            "Ref": "RouteTable"
+          }
+        }
+      },
+      "SecurityGroup": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupDescription": "This is Simple SecurityGroup made by CloudFormation",
+          "SecurityGroupIngress": [
+            {
+              "IpProtocol": "tcp",
+              "FromPort": "22",
+              "ToPort": "22",
+              "CidrIp": "0.0.0.0/0"
+            },
+            {
+              "IpProtocol": "tcp",
+              "FromPort": "3000",
+              "ToPort": "3000",
+              "CidrIp": "0.0.0.0/0"
+            }
+          ],
+          "Tags": [
+            {
+              "Key": "Application",
+              "Value": {
+                "Ref": "AWS::StackName"
+              }
+            }
+          ],
+          "VpcId": {
+            "Ref": "VPC"
+          }
+        }
+      },
+      "socketioServer":{
+        "Type":"AWS::EC2::Instance",
+        "Properties":{
+          "AvailabilityZone": {
+            "Fn::FindInMap": [
+              "AZs",
+              {
+                "Ref": "AWS::Region"
+              },
+              "PRI"
+            ]
+          },
+          "ImageId": {
+            "Fn::FindInMap": [
+              "RegionTable",
+              {
+                "Ref": "AWS::Region"
+              },
+              "AMI"
+            ]
+          },
+          "InstanceType":{
+            "Ref":"InstanceType"
+          },
+          "KeyName" : { 
+            "Ref" : "KeyName" 
+          },
+          "SubnetId": {
+            "Ref": "PublicSubnet"
+          },
+          "SecurityGroupIds": [
+            {
+              "Ref": "SecurityGroup"
+            }
+          ]
+        }
+      },
+      "streamprocessingclient" : {
+        "Type" : "AWS::IAM::User"
+      },
+      "ClientPolicy" : {
+          "Type" : "AWS::IAM::Policy",
+          "Properties" : {
+              "PolicyName" : "StreamProcessingClientPolicy",
+              "PolicyDocument" : {
+                  "Statement" : [{
+                      "Effect" : "Allow",
+                      "Action" : [
+                          "kinesis:Put*"
+                      ],
+                      "Resource" : { "Fn::Join" : [ "", ["arn:aws:kinesis:", {"Ref" : "AWS::Region"} , ":", {"Ref" : "AWS::AccountId"}, ":stream/", {"Ref" : "EventStream"}]]}
+                  },
+                  {
+                      "Effect" : "Allow",
+                      "Action" : [
+                          "sns:Subscribe"
+                      ],
+                      "Resource" : "arn:aws:sns:*:*:*"
+                  }
+                  ]
+              },
+              "Users" : [{ "Ref" : "streamprocessingclient" }]
+          }
+      },
+
+      "ClientKeys" : {
+          "Type" : "AWS::IAM::AccessKey",
+          "Properties" : {
+              "UserName" : { "Ref" : "streamprocessingclient" }
+          }
+      },
+
+      "EventStream" : {
+          "Type" : "AWS::Kinesis::Stream",
+          "Properties" : {
+              "ShardCount" : 1
+          }
+      },
+      
+      "EventDataSNS" : {
+        "Type" : "AWS::SNS::Topic",
+        "Properties":{
+          "Subscription":[
+            {"Endpoint":{ "Ref" : "SocketioServerEndpoint" },"Protocol":"http"}
+          ],
+          "TopicName" : "SocketServerTopic"
+        }
+      },
+
+      "SNSEventProcessor" : {
+          "Type" : "AWS::Lambda::Function",
+          "Properties" : {
+              "Description" : "Stream Processing SNS Event Processor",
+              "Handler" : "index.handler",
+              "MemorySize" : 128,
+              "Role" : {"Fn::GetAtt" : ["EventProcessorExecutionRole", "Arn"] },
+              "Timeout" : 10,
+              "Runtime" : "nodejs",
+              "Code" : {
+                "ZipFile":  { "Fn::Join": ["", [
+                  "var aws = require('aws-sdk');",
+                  "var sns = new aws.SNS();",
+                  "exports.handler = function(event, context) {",
+                  "    console.log('Received event:', JSON.stringify(event, null, 2));",
+                  "    var stackName = context.functionName.split('-')[0];",
+                  "    var putItems = [];",
+                  "    event.Records.forEach(function(record) {",
+                  "        payload = new Buffer(record.kinesis.data, 'base64').toString('ascii');",
+                  "        console.log('Decoded payload:', payload);",
+                  "        var tweet = JSON.parse(payload);",
+                  "        console.log('User:', tweet.user.name);",
+                  "        console.log('Timestamp:', tweet.created_at);",
+                  "        req = {",
+                  "            username:tweet.user.name,",
+                  "            profile_image_url:tweet.user.profile_image_url,",
+                  "            timestamp_ms:tweet.timestamp_ms,",
+                  "            text:tweet.text,",
+                  "            coordinates:tweet.coordinates",
+                  "        };",
+                  "        sns.publish({",
+                  "            Message: JSON.stringify(req),",
+                  "            Subject: 'message title',",
+                  "            TopicArn: '",{"Ref": "EventDataSNS"},"'",
+                  "            }, function(err, data) {",
+                  "                if (err) {",
+                  "                    console.log(err.stack);",
+                  "                    context.done(err, 'Brians Function Finished with Errors!');",
+                  "                    return;",
+                  "                }",
+                  "                console.log(data);",
+                  "                context.done(null, 'push sent');",
+                  "            });",
+                  "    });",
+                  "};"
+                ]]}
+              }
+          }
+      },
+
+      "EventProcessorExecutionRole" : {
+          "Type" : "AWS::IAM::Role",
+          "Properties" : {
+              "AssumeRolePolicyDocument" : {
+                  "Version" : "2012-10-17",
+                  "Statement" : [ {
+                      "Effect" : "Allow",
+                      "Principal" : {
+                          "Service" : [ "lambda.amazonaws.com" ]
+                      },
+                      "Action" : [ "sts:AssumeRole" ]
+                  } ]
+              },
+              "Path" : "/",
+              "Policies" : [ {
+                  "PolicyName" : "EventProcessorExecutionPolicy",
+                  "PolicyDocument" : {
+                      "Version" : "2012-10-17",
+                      "Statement" : [
+                          {
+                              "Effect" : "Allow",
+                              "Action" : [
+                                  "logs:*"
+                              ],
+                              "Resource" : "arn:aws:logs:*:*:*"
+                          },
+                          {
+                              "Effect" : "Allow",
+                              "Action" : [
+                                  "sns:Publish"
+                              ],
+                              "Resource" : "arn:aws:sns:*:*:*"
+                          }
+                      ]
+                  }
+              } ],
+              "ManagedPolicyArns" : ["arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole"]
+          }
+      },
+
+      "MapLambdaEventSource": {
+          "Type": "AWS::Lambda::EventSourceMapping",
+          "Properties": {
+              "FunctionName": {"Ref": "SNSEventProcessor"},
+              "StartingPosition": "TRIM_HORIZON",
+              "BatchSize": 25,
+              "EventSourceArn": {
+                  "Fn::Join" : [ "", ["arn:aws:kinesis:", {"Ref" : "AWS::Region"} , ":", {"Ref" : "AWS::AccountId"}, ":stream/", {"Ref" : "EventStream"}]]
+              }
+          }
+      }
+  },
+  "Outputs" : {
+    "AccessKeyId" : {
+        "Value" : { "Ref" : "ClientKeys" },
+        "Description" : "AWS Access Key Id of stream processing client user"
     },
-
-    "Outputs" : {
-        "AccessKeyId" : {
-            "Value" : { "Ref" : "ClientKeys" },
-            "Description" : "AWS Access Key Id of stream processing client user"
-        },
-        "SecretAccessKey" : {
-            "Value" : { "Fn::GetAtt" : ["ClientKeys", "SecretAccessKey"]},
-            "Description" : "AWS Secret Key of stream processing client user"
-        },
-        "KinesisStream" : {
-            "Value" : { "Ref" : "EventStream" },
-            "Description" : "The Kinesis stream used for ingestion."
-        },
-        "Region" : {
-            "Value" : { "Ref" : "AWS::Region" },
-            "Description" : "The region this template was launched in."
-        },
-        "SNStopic" : {
-            "Value" : { "Ref" : "EventDataSNS" },
-            "Description" : "SNS http Topic for ingestion."
-        }
+    "SecretAccessKey" : {
+        "Value" : { "Fn::GetAtt" : ["ClientKeys", "SecretAccessKey"]},
+        "Description" : "AWS Secret Key of stream processing client user"
+    },
+    "KinesisStream" : {
+        "Value" : { "Ref" : "EventStream" },
+        "Description" : "The Kinesis stream used for ingestion."
+    },
+    "Region" : {
+        "Value" : { "Ref" : "AWS::Region" },
+        "Description" : "The region this template was launched in."
+    },
+    "SNStopic" : {
+        "Value" : { "Ref" : "EventDataSNS" },
+        "Description" : "SNS http Topic for ingestion."
     }
+  }
 }
