@@ -289,7 +289,9 @@
                   {
                       "Effect" : "Allow",
                       "Action" : [
-                          "sns:Subscribe"
+                          "sns:Subscribe",
+                          "sns:ConfirmSubscription",
+                          "sns:AddPermission"
                       ],
                       "Resource" : "arn:aws:sns:*:*:*"
                   }
@@ -317,7 +319,7 @@
         "Type" : "AWS::SNS::Topic",
         "Properties":{
           "Subscription":[
-            {"Endpoint":{ "Fn::Join" : [ "", [ "http://", {"Fn::GetAtt" : [ "SocketioServer", "PublicDnsName" ]}, ":3000" ] ] },"Protocol":"http"}
+            {"Endpoint":{ "Fn::Join" : [ "", [ "http://", {"Fn::GetAtt" : [ "SocketioServer", "PublicIp" ]}, ":3000", "/httpsns" ] ] },"Protocol":"http"}
           ],
           "TopicName" : "SocketServerTopic"
         }
@@ -343,18 +345,8 @@
                   "    event.Records.forEach(function(record) {",
                   "        payload = new Buffer(record.kinesis.data, 'base64').toString('ascii');",
                   "        console.log('Decoded payload:', payload);",
-                  "        var tweet = JSON.parse(payload);",
-                  "        console.log('User:', tweet.user.name);",
-                  "        console.log('Timestamp:', tweet.created_at);",
-                  "        req = {",
-                  "            username:tweet.user.name,",
-                  "            profile_image_url:tweet.user.profile_image_url,",
-                  "            timestamp_ms:tweet.timestamp_ms,",
-                  "            text:tweet.text,",
-                  "            coordinates:tweet.coordinates",
-                  "        };",
                   "        sns.publish({",
-                  "            Message: JSON.stringify(req),",
+                  "            Message: payload,",
                   "            Subject: 'message title',",
                   "            TopicArn: '",{"Ref": "EventDataSNS"},"'",
                   "            }, function(err, data) {",
@@ -447,7 +439,7 @@
         "Description" : "SNS http Topic for ingestion."
     },
     "PublicDNS" : {
-        "Value" : { "Fn::Join" : [ "", [ "http://", {"Fn::GetAtt" : [ "SocketioServer", "PublicDnsName" ]}, ":3000" ] ]},
+        "Value" : { "Fn::Join" : [ "", [ "http://", {"Fn::GetAtt" : [ "SocketioServer", "PublicIp" ]}, ":3000" ] ]},
         "Description" : "PublicDnsName."
     }
   }

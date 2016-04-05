@@ -12,9 +12,17 @@ var tw = new twitter({
 tw.stream('statuses/filter', {'track':'amazon'}, function(stream) {
   stream.on('data', function (data) {
 
+    var req = {
+               user : {
+                 name : data.user.name,
+                 profile_image_url : data.user.profile_image_url
+               },
+               coordinates : data.coordinates,
+               text : data.text
+    }
     var pt_key = data.user.screen_name;
     var recordParams = {
-      Data: JSON.stringify(data),
+      Data: JSON.stringify(req),
       PartitionKey: pt_key,
       StreamName: ''
     };
@@ -26,4 +34,3 @@ tw.stream('statuses/filter', {'track':'amazon'}, function(stream) {
     });
   });
 });
-~   

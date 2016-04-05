@@ -189,13 +189,15 @@ $(function(){
   gauge.value(0);
                                 
   socket.on('msg', function(data) {
+    console.log(data);
     tw_cnt++;
     topic_cnt_tmp++;
     data_v.result.push(data);
-    var user_name = JSON.parse(data).username;
-    var text = JSON.parse(data).text;
-    var profile_image_url = JSON.parse(data).profile_image_url;
-    var coordinates = JSON.parse(data).coordinates;
+    var tweet = JSON.parse(data);
+    var user_name = tweet.user.name;
+    var text = tweet.text;
+    var profile_image_url = tweet.user.profile_image_url;
+    var coordinates = tweet.coordinates;
     var ts = data_v.timestamp;
     var d = new Date( ts*1000 );
     var hour = ( d.getHours()   < 10 ) ? '0' + d.getHours()   : d.getHours();
