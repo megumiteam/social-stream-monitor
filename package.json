@@ -1,0 +1,26 @@
+{
+  "name": "social-stream-monitor",
+  "version": "1.1.0",
+  "description": "It is a tool to visualize in real time the results of a search by a specific word of Twitter.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/megumiteam/social-stream-monitor.git"
+  },
+  "dependencies": {
+    "aws-sdk"   : "latest",
+    "url"       : "latest",
+    "async"     : "latest",
+    "ntwitter"  : "latest",
+    "socket.io" : "latest"
+  },
+  "author": "horike",
+  "license": "",
+  "bugs": {
+    "url": "https://github.com/megumiteam/social-stream-monitor/issues"
+  },
+  "homepage": "https://github.com/megumiteam/social-stream-monitor#readme"
+}

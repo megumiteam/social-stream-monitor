@@ -19,10 +19,6 @@
       "KeyName" : {
         "Type" : "String",
         "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the web server"
-      },
-      "SocketioServerEndpoint" : {
-        "Type" : "String",
-        "Description" : "Name of socket.io server endpoint."
       }
     },
     "Mappings":{
@@ -238,7 +234,7 @@
           }
         }
       },
-      "socketioServer":{
+      "SocketioServer":{
         "Type":"AWS::EC2::Instance",
         "Properties":{
           "AvailabilityZone": {
@@ -321,7 +317,7 @@
         "Type" : "AWS::SNS::Topic",
         "Properties":{
           "Subscription":[
-            {"Endpoint":{ "Ref" : "SocketioServerEndpoint" },"Protocol":"http"}
+            {"Endpoint":{ "Fn::Join" : [ "", [ "http://", {"Fn::GetAtt" : [ "SocketioServer", "PublicDnsName" ]}, ":3000" ] ] },"Protocol":"http"}
           ],
           "TopicName" : "SocketServerTopic"
         }
@@ -449,6 +445,10 @@
     "SNStopic" : {
         "Value" : { "Ref" : "EventDataSNS" },
         "Description" : "SNS http Topic for ingestion."
+    },
+    "PublicDNS" : {
+        "Value" : { "Fn::Join" : [ "", [ "http://", {"Fn::GetAtt" : [ "SocketioServer", "PublicDnsName" ]}, ":3000" ] ]},
+        "Description" : "PublicDnsName."
     }
   }
 }
