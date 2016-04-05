@@ -29,13 +29,13 @@ AWS parameters - from the Outputs tab of the CloudFormation template
     region = ""
     stream_name = ""
     
-## Socket.io server
+## socket.io server
 ###### Step1 Install node module
 
-   $ npm install aws-sdk
-   $ npm install url
-   $ npm install async
-   $ npm install socket.io
+    $ npm install aws-sdk
+    $ npm install url
+    $ npm install async
+    $ npm install socket.io
    
 ###### Step2 Edit app.js
 
