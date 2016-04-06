@@ -1,6 +1,6 @@
 var AWS = require('aws-sdk');
 var twitter = require('ntwitter');
-var options = retuire('./config/setting.json');
+var options = require('./config/setting.json');
 AWS.config.loadFromPath('./config/aws.json');
 var kinesis = new AWS.Kinesis();
 
