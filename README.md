@@ -8,59 +8,11 @@ It is a tool to visualize in real time the results of a search by a specific wor
 
 
 ## Setup
-### Twitter Stream to Kinesis
-###### Step1 Install Python modules boto3 and TwitterAPI.
+- `$ git clone https://github.com/megumiteam/social-stream-monitor.git`.
+- Upload `social_stream_processing.template` to CloudFormation.
+- Access `PublicDNS` from the Outputs tab of the CloudFormation template.
 
-    $ pip install boto3 TwitterAPI
-
-###### step2 Edit twitter2kinesis.py
-
-Edit The Twitter API parameters
-
-    consumer_key = ""
-    consumer_secret = ""
-    access_token_key = ""
-    access_token_secret = ""
-
-AWS parameters - from the Outputs tab of the CloudFormation template
-
-    access_key = ""
-    secret_access_key = ""
-    region = ""
-    stream_name = ""
-
-## socket.io server
-###### Step1 Install node module
-
-    $ npm install
-
-###### Step2 Edit app.js
-
-Amazon SNS parameters - from the Outputs tab of the CloudFormation template
-
-    var args = {
-        TopicArn:"arn:aws:sns:...",
-        Protocol:'http',
-        Endpoint:"http://<socket server host>:3000/httpsns"
-    };
-
-
-###### Step3 Edit config/aws.json
-
-AWS parameters - from the Outputs tab of the CloudFormation template
-
-    {
-        "accessKeyId":"",
-        "secretAccessKey":"",
-        "region":""
-    }
-
-## Setup Cloudformation template
-- Upload `social_stream_processing.template` to Cloudformation(Please choose region `us-east-1`)
-- Input `http:/<socket.io endpoint>:3000/` in socket.io server endpoint
-
-## Execute
+## Manual Execute
 - Run `$ npm start` as daemon mode or run `$ node app.js`.
 - `$ npm stop` or `$ npm restart`: Stop or restart daemmon.
-- `$ python twitter2kinesis.py` execute Twitter Streaming to Kinesis
-- Access to `http:/<socket.io endpoint>:3000/` on your browser.
+- `$ node twitter2kinesis.js` execute Twitter Streaming to Kinesis.
