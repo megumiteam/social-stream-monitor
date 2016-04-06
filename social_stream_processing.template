@@ -129,6 +129,13 @@
           ]
         }
       },
+      "EIP" : {
+        "Type" : "AWS::EC2::EIP",
+        "Properties" : {
+          "Domain" : "vpc"
+        },
+        "DependsOn" : "AttachGatewayToVPC"
+      },
       "PublicSubnet": {
         "Type": "AWS::EC2::Subnet",
         "Properties": {
@@ -250,6 +257,22 @@
           }
         }
       },
+      "IPAssoc" : {
+         "Type" : "AWS::EC2::EIPAssociation",
+         "Properties" : {
+           "AllocationId" : { "Fn::GetAtt" : [ "EIP", "AllocationId" ]},
+           "InstanceId" : { "Ref" : "SocketioServer" }
+         }
+      },
+      "EventDataSNS" : {
+        "Type" : "AWS::SNS::Topic",
+        "Properties":{
+          "Subscription":[
+            {"Endpoint":{ "Fn::Join" : [ "", [ "http://", { "Ref" : "EIP" }, ":3000", "/httpsns" ] ] },"Protocol":"http"}
+          ],
+          "TopicName" : "SocketServerTopic"
+        }
+      },
       "SocketioServer":{
         "Type":"AWS::EC2::Instance",
         "Metadata" : {
@@ -259,13 +282,25 @@
                 "/home/bitnami/social-stream-monitor/config/setting.json" : {
                   "content" : { "Fn::Join" : [ "", [
                     "{\n",
-                    "streamname:",{ "Ref" : "EventStream" },"\n",
-                    "topic_arn:",{ "Ref" : "EventDataSNS" },"\n",
-                    "sns_endpoint:",{ "Fn::Join" : [ "", [ "http://", {"Fn::GetAtt" : [ "SocketioServer", "PublicIp" ]}, ":3000", "/httpsns" ] ] },"\n",
-                    "twitter_consumer_key:",{ "Ref" : "TwitterConsumerKey" },"\n",
-                    "twitter_consumer_secret:",{ "Ref" : "TwitterConsumerSecret" },"\n",
-                    "twitter_access_token_key:",{ "Ref" : "TwitterAccessTokenKey" },"\n",
+                    "streamname:",{ "Ref" : "EventStream" },",\n",
+                    "topic_arn:",{ "Ref" : "EventDataSNS" },",\n",
+                    "sns_endpoint:",{ "Fn::Join" : [ "", [ "http://", { "Ref" : "EIP" }, ":3000", "/httpsns" ] ] },",\n",
+                    "twitter_consumer_key:",{ "Ref" : "TwitterConsumerKey" },",\n",
+                    "twitter_consumer_secret:",{ "Ref" : "TwitterConsumerSecret" },",\n",
+                    "twitter_access_token_key:",{ "Ref" : "TwitterAccessTokenKey" },",\n",
                     "twitter_access_token_secret:",{ "Ref" : "TwitterAccessTokenSecret" },"\n",
+                    "}\n"
+                  ]]},
+                "mode"  : "000600",
+                "owner" : "bitnami",
+                "group" : "bitnami"
+                },
+                "/home/bitnami/social-stream-monitor/config/aws.json" : {
+                  "content" : { "Fn::Join" : [ "", [
+                    "{\n",
+                    "accessKeyId:",{ "Ref" : "ClientKeys" },",\n",
+                    "secretAccessKey:",{ "Fn::GetAtt" : ["ClientKeys", "SecretAccessKey"]},",\n",
+                    "region:",{ "Ref" : "AWS::Region" },",\n",
                     "}\n"
                   ]]},
                 "mode"  : "000600",
@@ -367,16 +402,6 @@
           "Properties" : {
               "ShardCount" : 1
           }
-      },
-      
-      "EventDataSNS" : {
-        "Type" : "AWS::SNS::Topic",
-        "Properties":{
-          "Subscription":[
-            {"Endpoint":{ "Fn::Join" : [ "", [ "http://", {"Fn::GetAtt" : [ "SocketioServer", "PublicIp" ]}, ":3000", "/httpsns" ] ] },"Protocol":"http"}
-          ],
-          "TopicName" : "SocketServerTopic"
-        }
       },
 
       "SNSEventProcessor" : {
@@ -493,7 +518,7 @@
         "Description" : "SNS http Topic for ingestion."
     },
     "PublicDNS" : {
-        "Value" : { "Fn::Join" : [ "", [ "http://", {"Fn::GetAtt" : [ "SocketioServer", "PublicIp" ]}, ":3000" ] ]},
+        "Value" : { "Fn::Join" : [ "", [ "http://", {"Ref" : "EIP"}, ":3000" ] ]},
         "Description" : "PublicDnsName."
     }
   }

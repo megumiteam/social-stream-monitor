@@ -2,7 +2,7 @@ var http = require('http');
 var url = require("url");
 var async = require('async');
 var AWS = require('aws-sdk');
-var options = retuire('./config/setting.json');
+var options = require('./config/setting.json');
  
 AWS.config.loadFromPath('./config/aws.json');
 var sns = new AWS.SNS();
