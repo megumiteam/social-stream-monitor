@@ -19,6 +19,22 @@
       "KeyName" : {
         "Type" : "String",
         "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the web server"
+      },
+      "TwitterConsumerKey" : {
+        "Type" : "String",
+        "Description" : "TwitterConsumerKey"
+      },
+      "TwitterConsumerSecret" : {
+        "Type" : "String",
+        "Description" : "TwitterConsumerSecret"
+      },
+      "TwitterAccessTokenKey" : {
+        "Type" : "String",
+        "Description" : "TwitterAccessTokenKey"
+      },
+      "TwitterAccessTokenSecret" : {
+        "Type" : "String",
+        "Description" : "TwitterAccessTokenSecret"
       }
     },
     "Mappings":{
@@ -236,6 +252,30 @@
       },
       "SocketioServer":{
         "Type":"AWS::EC2::Instance",
+        "Metadata" : {
+          "AWS::CloudFormation::Init" : {
+            "config" : {
+              "files" : {
+                "/home/bitnami/social-stream-monitor/config/setting.json" : {
+                  "content" : { "Fn::Join" : [ "", [
+                    "{\n",
+                    "streamname:",{ "Ref" : "EventStream" },"\n",
+                    "topic_arn:",{ "Ref" : "EventDataSNS" },"\n",
+                    "sns_endpoint:",{ "Fn::Join" : [ "", [ "http://", {"Fn::GetAtt" : [ "SocketioServer", "PublicIp" ]}, ":3000", "/httpsns" ] ] },"\n",
+                    "twitter_consumer_key:",{ "Ref" : "TwitterConsumerKey" },"\n",
+                    "twitter_consumer_secret:",{ "Ref" : "TwitterConsumerSecret" },"\n",
+                    "twitter_access_token_key:",{ "Ref" : "TwitterAccessTokenKey" },"\n",
+                    "twitter_access_token_secret:",{ "Ref" : "TwitterAccessTokenSecret" },"\n",
+                    "}\n"
+                  ]]},
+                "mode"  : "000600",
+                "owner" : "bitnami",
+                "group" : "bitnami"
+                }
+              }
+            }
+          }
+        },
         "Properties":{
           "AvailabilityZone": {
             "Fn::FindInMap": [
@@ -268,7 +308,21 @@
             {
               "Ref": "SecurityGroup"
             }
-          ]
+          ],
+          "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+             "#!/bin/bash -xe\n",
+             "apt-get update\n",
+             "apt-get -y install python-setuptools\n",
+             "apt-get -y install python-pip\n",
+             "apt-get  -y install python-dev libffi-dev build-essential\n",
+             "aptitude -y install libssl-dev\n",
+             "pip install --upgrade --force-reinstall pyopenssl ndg-httpsclient pyasn1\n",
+             "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+             "/opt/bitnami/git/bin/git clone -b 1.1 https://github.com/megumiteam/social-stream-monitor.git /home/bitnami/social-stream-monitor\n",
+             "cd /home/bitnami/social-stream-monitor && /opt/bitnami/nodejs/bin/npm install\n",
+             "cfn-init --region ", { "Ref" : "AWS::Region" },
+             "    -s ", { "Ref" : "AWS::StackId" }, " -r SocketioServer "
+		  ]]}}
         }
       },
       "streamprocessingclient" : {

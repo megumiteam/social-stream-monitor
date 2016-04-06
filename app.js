@@ -2,6 +2,7 @@ var http = require('http');
 var url = require("url");
 var async = require('async');
 var AWS = require('aws-sdk');
+var options = retuire('./config/setting.json');
  
 AWS.config.loadFromPath('./config/aws.json');
 var sns = new AWS.SNS();
@@ -74,9 +75,9 @@ function handler(req, res) {
  
 function initSubscriber(callback) {
     var args = {
-        TopicArn:"",
-        Protocol:"",
-        Endpoint:""
+        TopicArn:options.topic_arn,
+        Protocol:"http",
+        Endpoint:options.sns_endpoint
     };
  
     sns.subscribe(args, function (err, data) {

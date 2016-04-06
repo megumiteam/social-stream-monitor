@@ -1,12 +1,14 @@
 var AWS = require('aws-sdk');
+var twitter = require('ntwitter');
+var options = retuire('./config/setting.json');
 AWS.config.loadFromPath('./config/aws.json');
 var kinesis = new AWS.Kinesis();
-var twitter = require('ntwitter');
+
 var tw = new twitter({
-  consumer_key: '',
-  consumer_secret: '',
-  access_token_key: '',
-  access_token_secret: ''
+  consumer_key: options.twitter_consumer_key,
+  consumer_secret: options.twitter_consumer_secret,
+  access_token_key: options.twitter_access_token_key,
+  access_token_secret: options.twitter_access_token_secret
 });
 
 tw.stream('statuses/filter', {'track':'amazon'}, function(stream) {
@@ -24,7 +26,7 @@ tw.stream('statuses/filter', {'track':'amazon'}, function(stream) {
     var recordParams = {
       Data: JSON.stringify(req),
       PartitionKey: pt_key,
-      StreamName: ''
+      StreamName: options.streamname
     };
 
     kinesis.putRecord(recordParams, function(err, data) {
