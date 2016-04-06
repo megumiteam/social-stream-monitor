@@ -356,7 +356,9 @@
              "/opt/bitnami/git/bin/git clone -b 1.1 https://github.com/megumiteam/social-stream-monitor.git /home/bitnami/social-stream-monitor\n",
              "cd /home/bitnami/social-stream-monitor && /opt/bitnami/nodejs/bin/npm install\n",
              "cfn-init --region ", { "Ref" : "AWS::Region" },
-             "    -s ", { "Ref" : "AWS::StackId" }, " -r SocketioServer "
+             "    -s ", { "Ref" : "AWS::StackId" }, " -r SocketioServer ",
+             "cd /home/bitnami/social-stream-monitor && /opt/bitnami/nodejs/bin/npm start\n",
+             "cd /home/bitnami/social-stream-monitor && /opt/bitnami/nodejs/bin/node twitter2kinesis.js\n"
 		  ]]}}
         }
       },
