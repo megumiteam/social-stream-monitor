@@ -21,22 +21,19 @@ Edit The Twitter API parameters
     consumer_secret = ""
     access_token_key = ""
     access_token_secret = ""
-    
+
 AWS parameters - from the Outputs tab of the CloudFormation template
 
     access_key = ""
     secret_access_key = ""
     region = ""
     stream_name = ""
-    
+
 ## socket.io server
 ###### Step1 Install node module
 
-    $ npm install aws-sdk
-    $ npm install url
-    $ npm install async
-    $ npm install socket.io
-   
+    $ npm install
+
 ###### Step2 Edit app.js
 
 Amazon SNS parameters - from the Outputs tab of the CloudFormation template
@@ -63,6 +60,7 @@ AWS parameters - from the Outputs tab of the CloudFormation template
 - Input `http:/<socket.io endpoint>:3000/` in socket.io server endpoint
 
 ## Execute
-- `$ node app.js` execute socket.io server
+- Run `$ npm start` as daemon mode or run `$ node app.js`.
+- `$ npm stop` or `$ npm restart`: Stop or restart daemmon.
 - `$ python twitter2kinesis.py` execute Twitter Streaming to Kinesis
 - Access to `http:/<socket.io endpoint>:3000/` on your browser.
