@@ -353,7 +353,7 @@
              "aptitude -y install libssl-dev\n",
              "pip install --upgrade --force-reinstall pyopenssl ndg-httpsclient pyasn1\n",
              "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
-             "/opt/bitnami/git/bin/git clone -b 1.1 https://github.com/megumiteam/social-stream-monitor.git /home/bitnami/social-stream-monitor\n",
+             "/opt/bitnami/git/bin/git clone https://github.com/megumiteam/social-stream-monitor.git /home/bitnami/social-stream-monitor\n",
              "cd /home/bitnami/social-stream-monitor && /opt/bitnami/nodejs/bin/npm install\n",
              "cfn-init --region ", { "Ref" : "AWS::Region" },
              "    -s ", { "Ref" : "AWS::StackId" }, " -r SocketioServer ",
