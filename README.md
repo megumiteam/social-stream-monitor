@@ -9,7 +9,7 @@ It is a tool to visualize in real time the results of a search by a specific wor
 
 ## Setup
 - `$ git clone https://github.com/megumiteam/social-stream-monitor.git`.
-- Upload `social_stream_processing.template` to CloudFormation.
+- Upload `social_stream_processing.template` to your AWS Account CloudFormation.
 - Access `PublicDNS` from the Outputs tab of the CloudFormation template.
 
 ## Manual Execute
