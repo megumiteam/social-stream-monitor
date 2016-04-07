@@ -7,7 +7,7 @@
     "start": "pm2 start app.js --watch",
     "stop": "pm2 stop app.js --watch",
     "restart": "pm2 restart app.js --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha -R spec tests/"
   },
   "repository": {
     "type": "git",
@@ -26,5 +26,10 @@
     "socket.io": "^1.4.5",
     "url": "^0.11.0",
     "ntwitter": "^0.5.0"
+  },
+  "devDependencies": {
+    "mocha": "^2.4.5",
+    "should": "^8.3.0",
+    "socket.io-client": "^1.4.5"
   }
 }
