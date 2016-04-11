@@ -56,7 +56,7 @@
 }
 .gauge .major {
     fill: #515151;
-    font-size: 20px;
+    font-size: 13px;
     font-family: 'Play', verdana, sans-serif;
     font-weight: normal;
 }
@@ -156,10 +156,10 @@ $(function(){
     });
   var svg_2 = d3.select("#speedometer")
           .append("svg:svg")
-          .attr("width", 200)
+          .attr("width", 250)
           .attr("height", 200);
   var gauge = iopctrl.arcslider()
-          .radius(120)
+          .radius(80)
           .events(false)
           .indicator(iopctrl.defaultGaugeIndicator);
   gauge.axis().orient("in")
@@ -172,7 +172,7 @@ $(function(){
                   .domain([0, 20])
                   .range([-3*Math.PI/4, 3*Math.PI/4]));
   var segDisplay = iopctrl.segdisplay()
-          .width(80)
+          .width(60)
           .digitCount(6)
           .negative(false)
           .decimals(0);
