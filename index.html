@@ -20,11 +20,9 @@
     <!-- Custom CSS -->
     <link href="dist/css/sb-admin-2.css" rel="stylesheet">
  
-    
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-    <script src="http://d3js.org/topojson.v1.min.js"></script>
     <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/epoch/0.8.4/js/epoch.min.js"></script>
     <script type="text/javascript" src="http://iop.io/js/vendor/polymer/PointerEvents/pointerevents.js"></script>
@@ -158,8 +156,8 @@ $(function(){
     });
   var svg_2 = d3.select("#speedometer")
           .append("svg:svg")
-          .attr("width", 400)
-          .attr("height", 400);
+          .attr("width", 200)
+          .attr("height", 200);
   var gauge = iopctrl.arcslider()
           .radius(120)
           .events(false)
@@ -245,7 +243,7 @@ $(function(){
   });
 
   setInterval( function() {  	
-    $('#min-per-cnt').text(data_v.result.length + '人');
+    $('#min-per-cnt').text(data_v.result.length);
     segDisplay.value(data_v.result.length);
     gauge.value(data_v.result.length);
   	chart.push(data_v.next(data_v.result.length));
@@ -260,7 +258,7 @@ $(function(){
     if ( topic_roop > 6 ) {
       topic_cnt.shift();
       topic_cnt.push(topic_cnt_tmp);
-      $("#topic-man").text(sum(topic_cnt)+ "人");
+      $("#topic-man").text(sum(topic_cnt));
     } else {
       topic_cnt.push(topic_cnt_tmp);
     }
@@ -332,7 +330,7 @@ $(function(){
                         <!-- /.panel-body -->
                     </div>
                 </div>
-                <div class="col-lg-8">
+                <div class="col-lg-6">
                     <!-- /.panel -->
                     <div class="chat-panel panel panel-default">
                         <div class="panel-heading">
@@ -348,11 +346,11 @@ $(function(){
                     </div>
                     <!-- /.panel .chat-panel -->
                 </div>
-                <!-- /.col-lg-8 -->
+                <!-- /.col-lg-6 -->
                 <div class="col-lg-2">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            現在話題にしている人の数
+                            The number of people who are currently on the topic
                         </div>
                         <div class="panel-body">
                             <p id="topic-man" class="huge"><img src="http://cdnjs.cloudflare.com/ajax/libs/semantic-ui/0.16.1/images/loader-large.gif"/></p>
@@ -362,11 +360,11 @@ $(function(){
                     <!-- /.panel -->
                     
                 </div>
-                <!-- /.col-lg-4 -->
-                <div class="col-lg-2">
+                <!-- /.col-lg-2 -->
+                <div class="col-lg-4">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            秒間のTweet数 : <span id="min-per-cnt" ></span>
+                            Tweet the number of seconds:<span id="min-per-cnt" ></span>
                         </div>
                         <div class="panel-body">
                             <div>
